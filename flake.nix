@@ -19,6 +19,7 @@
       let
         overlays = [ (import rust-overlay) ];
         pkgs = import nixpkgs { inherit system overlays; };
+        pkg-version = (builtins.fromTOML (builtins.readFile ./Cargo.toml)).package.version;
         rust-version = "1.60.0";
         rust-dist = pkgs.rust-bin.stable.${rust-version}.default.override {
           extensions = [ "rust-src" "rustfmt" ];
@@ -27,7 +28,7 @@
       in {
         defaultPackage = pkgs.rustPlatform.buildRustPackage {
           pname = "powerglove";
-          version = (builtins.fromTOML (builtins.readFile ./Cargo.toml)).package.version;
+          version = pkg-version;
 
           src = ./.;
 
