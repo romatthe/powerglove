@@ -40,7 +40,12 @@
     
         devShell = with pkgs; mkShell {
           buildInputs = [
+            # Conventional commits
+            convco
+            git-cliff
+            # Nix
             nixfmt
+            # Rust
             rust-analyzer
             rust-dist
           ];
