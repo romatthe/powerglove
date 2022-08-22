@@ -21,13 +21,13 @@
         pkgs = import nixpkgs { inherit system overlays; };
         rust-version = "1.60.0";
         rust-dist = pkgs.rust-bin.stable.${rust-version}.default.override {
-          extensions = [ "llvm-tools-preview" "rust-src" "rustfmt" ];
+          extensions = [ "rust-src" "rustfmt" ];
           targets = [ "x86_64-unknown-linux-gnu" ];
         };
       in {
         defaultPackage = pkgs.rustPlatform.buildRustPackage {
           pname = "powerglove";
-          version = "0.1.0";
+          version = (builtins.fromTOML (builtins.readFile ./Cargo.toml)).package.version;
 
           src = ./.;
 
@@ -42,7 +42,8 @@
     
         devShell = with pkgs; mkShell {
           buildInputs = [
-            # Conventional commits
+            # Project tools
+            cargo-msrv
             convco
             git-cliff
             # Nix
@@ -51,6 +52,12 @@
             rust-analyzer
             rust-dist
           ];
+
+          shellHook = ''
+
+          '';
+
+          RUST_BACKTRACE = "1";
         };
       }
     );
