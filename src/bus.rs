@@ -1,5 +1,3 @@
-use crate::cpu::CPU;
-
 const RAM_SIZE: usize = 64 * 1024;
 
 #[derive(Debug)]

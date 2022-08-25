@@ -6,7 +6,7 @@ use crate::bus::Bus;
 bitflags! {
     pub struct StatusFlags: u8 {
         /// Carry flag
-        const C = 1 << 0;
+        const C = 1;
         /// Zero flag
         const Z = 1 << 1;
         /// Disable interrupts flag
