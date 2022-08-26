@@ -309,5 +309,4 @@ static INSTRUCTION_MAP: Lazy<[Instruction; 256]> = Lazy::new(|| {[
     Instruction { mnemonic: Mnemonic::SBC, op_exec: cpu_instr::sbc, mode: AddressingMode::ABX, mode_exec: cpu_addr::abx, cycles: 4 },
     Instruction { mnemonic: Mnemonic::INC, op_exec: cpu_instr::inc, mode: AddressingMode::ABX, mode_exec: cpu_addr::abx, cycles: 7 },
     Instruction { mnemonic: Mnemonic::XXX, op_exec: cpu_instr::xxx, mode: AddressingMode::IMP, mode_exec: cpu_addr::imp, cycles: 7 },
-]
-});
+]});

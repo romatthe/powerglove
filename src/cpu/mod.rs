@@ -48,8 +48,14 @@ pub struct CPU {
     /// The program counter
     pub pc: u16,
 
-    // Current instruction
+    // Current instruction execution
 
+    /// Data that was fetched as part of the addressing
+    pub fetched: u8,
+    /// Location in memory read from as part of the addressing
+    pub addr_abs: u16,
+    /// Represents absolute address following a branch
+    pub addr_rel: u16,   
     /// The amount of cycles remaining for the current instruction
     pub cycles_remaining: u8,
     /// The opcode that's currently being executed
@@ -66,6 +72,9 @@ impl CPU {
             y: 0,
             sp: 0,
             pc: 0,
+            fetched: 0,
+            addr_abs: 0,
+            addr_rel: 0,
             cycles_remaining: 0,
             opcode: 0,
         }
@@ -90,7 +99,7 @@ impl CPU {
         if self.cycles_remaining == 0 {
             // Set the next opcode to execute
             self.opcode = self.read(self.pc);
-            self.pc += 1;
+            self.pc = self.pc.wrapping_add(1);
             
             // Set how many clock cycles we need to execute
             self.cycles_remaining = Instruction::decode(self.opcode).cycles;
