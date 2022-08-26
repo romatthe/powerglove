@@ -1,11 +1,54 @@
 use super::{CPU, StatusFlags};
 
+/// Add with carry in. Allows us to add a value to the accumulator and a carry bit. 
+/// If the result is > 255 there is an overflow setting the carry bit. Ths allows you 
+/// to chain together ADC instructions to add numbers larger than 8-bits. 
 pub fn adc(cpu: &mut CPU) -> u8 {
-    0
+    let fetched: u16 = cpu.fetch().into();
+
+    // Add is performed in 16-bit domain for emulation to capture any carry bit, 
+    // which will exist in bit 8 of the 16-bit word
+    let result = fetched + cpu.a as u16 + cpu.status.contains(StatusFlags::C) as u16;
+
+    // We need to determine the signed overflow flag using the following fomula
+    let v = !((cpu.a as u16) ^ fetched) & ((cpu.a as u16) ^ result) & 0x0080;
+
+    // Set all the required
+    cpu.status.set(StatusFlags::C, result > 255);
+    cpu.status.set(StatusFlags::Z, result & 0x00FF == 0);
+    cpu.status.set(StatusFlags::N, result & 0b1000_0000 != 0);
+    cpu.status.set(StatusFlags::V, v != 0);
+
+    // Load the result back into the accumulator, but as a u8 of course!
+    cpu.a = (result & 0x00FF) as u8;
+
+    1
 }
 
+/// Subtraction with Borrow In. Given the explanation for ADC above, we can reorganise our data
+/// to use the same computation for addition, for subtraction by multiplying the data by -1, 
+/// i.e. make it negative.
 pub fn sbc(cpu: &mut CPU) -> u8 {
-    0
+    // Fetch the datea and invert the lo bits (this is a u8 stored in a u16, so this is all of them) 
+    let fetched: u16 = (cpu.fetch() as u16) ^ 0x00FF;
+
+    // Add is performed in 16-bit domain for emulation to capture any carry bit, 
+    // which will exist in bit 8 of the 16-bit word
+    let result = fetched + cpu.a as u16 + cpu.status.contains(StatusFlags::C) as u16;
+
+    // We need to determine the signed overflow flag using the following fomula
+    let v = !((cpu.a as u16) ^ fetched) & ((cpu.a as u16) ^ result) & 0x0080;
+
+    // Set all the required
+    cpu.status.set(StatusFlags::C, result > 255);
+    cpu.status.set(StatusFlags::Z, result & 0x00FF == 0);
+    cpu.status.set(StatusFlags::N, result & 0b1000_0000 != 0);
+    cpu.status.set(StatusFlags::V, v != 0);
+
+    // Load the result back into the accumulator, but as a u8 of course!
+    cpu.a = (result & 0x00FF) as u8;
+
+    1
 }
 
 /// Logical AND on the value in the accumulator.
