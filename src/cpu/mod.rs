@@ -5,7 +5,7 @@ pub mod instructions;
 use bitflags::bitflags;
 use crate::bus::Bus;
 
-use self::instructions::Instruction;
+use self::instructions::{AddressingMode, Instruction};
 
 bitflags! {
     pub struct StatusFlags: u8 {
@@ -93,8 +93,20 @@ impl CPU {
         
     }
 
+    fn fetch(&mut self) -> u8 {
+        let instr = Instruction::decode(self.opcode);
+
+        // Use the absolute address to fetch from memory unless we're in implied
+        // addressing mode.
+        if instr.mode != AddressingMode::IMP {
+            self.fetched = self.read(self.addr_abs);
+        }
+
+        self.fetched
+    }
+
     /// Simulates the passing of a single clock cycle
-    pub fn clock(&mut self) {
+    fn clock(&mut self) {
         // No more cycles are remaining in the currently executing instruction
         if self.cycles_remaining == 0 {
             // Set the next opcode to execute
@@ -108,8 +120,8 @@ impl CPU {
             let more_cycles1 = (Instruction::decode(self.opcode).mode_exec)(self);
             let more_cycles2 = (Instruction::decode(self.opcode).op_exec)(self);
 
-            // If the previous two actions indicated that there are more cycles to complete
-            // than normal, we add those to the total cycle count for the current instruction.
+            // If the previous two actions indicated that they both require additional cycles
+            // we add those to the total need to complete for this instruction.
             self.cycles_remaining += more_cycles1 & more_cycles2;
         }
 

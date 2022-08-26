@@ -19,7 +19,7 @@ pub enum Mnemonic {
 // All possible 6502 addressing modes
 // Addressing modes define how the CPU fetched the required operands for an instructions
 // Ref: http://www.thealmightyguru.com/Games/Hacking/Wiki/index.php?title=Addressing_Modes
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum AddressingMode {
     ZP0,        // ZeroPage             Operand is an address and only the low byte is used,         ex: LDA $EE
     ZPX,        // Indexed ZeroPage X   Operand is 1-byte address, X register is added to it         eg: STA $00,X
