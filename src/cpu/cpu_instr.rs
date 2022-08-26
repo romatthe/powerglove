@@ -109,19 +109,31 @@ pub fn bvs(cpu: &mut CPU) -> u8 {
     0
 }
 
+/// Clear the "carry" flag.
 pub fn clc(cpu: &mut CPU) -> u8 {
+    cpu.status.set(StatusFlags::C, false);
+
     0
 }
 
+/// Clear the "decimal" flag.
 pub fn cld(cpu: &mut CPU) -> u8 {
+    cpu.status.set(StatusFlags::D, false);
+
     0
 }
 
+/// Clear the "disable interrupt" flag.
 pub fn cli(cpu: &mut CPU) -> u8 {
+    cpu.status.set(StatusFlags::I, false);
+
     0
 }
 
+/// Clear the "overflow" flag.
 pub fn clv(cpu: &mut CPU) -> u8 {
+    cpu.status.set(StatusFlags::V, false);
+
     0
 }
 
