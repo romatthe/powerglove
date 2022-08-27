@@ -1,5 +1,6 @@
 pub mod cpu_addr;
 pub mod cpu_instr;
+pub mod disassemble;
 pub mod instructions;
 
 use bitflags::bitflags;
