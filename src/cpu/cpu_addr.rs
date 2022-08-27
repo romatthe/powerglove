@@ -3,6 +3,7 @@ use super::CPU;
 /// Implied addressiong. No data is fetched with this addressing mode as it
 /// is part of the actual instruction instead. Some implied instruction act
 /// upon the accumulator value though, so we set `fetched` to that value.
+#[inline]
 pub fn imp(cpu: &mut CPU) -> u8 {
     cpu.fetched = cpu.a;
     0
@@ -10,6 +11,7 @@ pub fn imp(cpu: &mut CPU) -> u8 {
 
 /// Immediate mode addressing. This means the data is supplied as part of the
 /// instruction (in other words, the next byte).
+#[inline]
 pub fn imm(cpu: &mut CPU) -> u8 {
     cpu.addr_abs = cpu.pc;
     cpu.pc = cpu.pc.wrapping_add(1);
@@ -20,6 +22,7 @@ pub fn imm(cpu: &mut CPU) -> u8 {
 /// byte being 0x00). In the 6502 world, working memory is often located at or around
 /// page zero. Thus we can interact with working memory with instructions that require
 /// less bytes (in other words, shorter instructions).
+#[inline]
 pub fn zp0(cpu: &mut CPU) -> u8 {
     cpu.addr_abs = cpu.read(cpu.pc).into();
     cpu.addr_abs = cpu.addr_abs & 0x00FF;
@@ -29,6 +32,7 @@ pub fn zp0(cpu: &mut CPU) -> u8 {
 
 /// Zero page addressing with the offset of the X register added to it. Useful for iterating
 /// through regions of working memory.
+#[inline]
 pub fn zpx(cpu: &mut CPU) -> u8 {
     cpu.addr_abs = (cpu.read(cpu.pc) + cpu.x).into();
     cpu.addr_abs = cpu.addr_abs & 0x00FF;
@@ -38,6 +42,7 @@ pub fn zpx(cpu: &mut CPU) -> u8 {
 
 /// Zero page addressing with the offset of the Y register added to it. Useful for iterating
 /// through regions of working memory.
+#[inline]
 pub fn zpy(cpu: &mut CPU) -> u8 {
     cpu.addr_abs = (cpu.read(cpu.pc) + cpu.y).into();
     cpu.addr_abs = cpu.addr_abs & 0x00FF;
@@ -46,6 +51,7 @@ pub fn zpy(cpu: &mut CPU) -> u8 {
 }
 
 /// Relative addressing. Only used in branching instructions.
+#[inline]
 pub fn rel(cpu: &mut CPU) -> u8 {
     cpu.addr_rel = cpu.read(cpu.pc).into();
     cpu.pc = cpu.pc.wrapping_add(1);
@@ -62,6 +68,7 @@ pub fn rel(cpu: &mut CPU) -> u8 {
 
 /// Absolute addressing. The entire address we need is located in the next two bytes from the
 /// instruction.
+#[inline]
 pub fn abs(cpu: &mut CPU) -> u8 {
     let lo = cpu.read(cpu.pc);
     let hi = cpu.read(cpu.pc.wrapping_add(1));
@@ -74,6 +81,7 @@ pub fn abs(cpu: &mut CPU) -> u8 {
 
 /// Absolute addressing with the offset in the X register added to it. An extra cycle must be
 /// elapsed if during the adding of the X register, a page is crossed.
+#[inline]
 pub fn abx(cpu: &mut CPU) -> u8 {
     let lo = cpu.read(cpu.pc);
     let hi = cpu.read(cpu.pc.wrapping_add(1));
@@ -94,6 +102,7 @@ pub fn abx(cpu: &mut CPU) -> u8 {
 
 /// Absolute addressing with the offset in the Y register added to it. An extra cycle must be
 /// elapsed if during the adding of the Y register, a page is crossed.
+#[inline]
 pub fn aby(cpu: &mut CPU) -> u8 {
     let lo = cpu.read(cpu.pc);
     let hi = cpu.read(cpu.pc.wrapping_add(1));
@@ -114,6 +123,7 @@ pub fn aby(cpu: &mut CPU) -> u8 {
 
 /// Indirect addressing. This is an assembly-level technique to implement pointer-like addressing, as
 /// this reads from the address defined by the the value read through absolute addressing.
+#[inline]
 pub fn ind(cpu: &mut CPU) -> u8 {
     // First construct the "pointer"
     let ptr_lo = cpu.read(cpu.pc);
@@ -134,6 +144,7 @@ pub fn ind(cpu: &mut CPU) -> u8 {
 }
 
 /// Indirect addressing of the zero page with X offset.
+#[inline]
 pub fn izx(cpu: &mut CPU) -> u8 {
     let t: u16 = cpu.read(cpu.pc).into();
     let lo = cpu.read((t + cpu.x as u16) as u16 & 0x00FF);
@@ -147,6 +158,7 @@ pub fn izx(cpu: &mut CPU) -> u8 {
 
 
 /// Indirect addressing of the zero page with Y offset after reading.
+#[inline]
 pub fn izy(cpu: &mut CPU) -> u8 {
     let t: u16 = cpu.read(cpu.pc).into();
     let lo = cpu.read(t & 0x00FF);
