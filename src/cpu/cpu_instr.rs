@@ -1,4 +1,4 @@
-use super::{CPU, StatusFlags};
+use super::{CPU, STACK_BASE, StatusFlags};
 
 /// Add with carry in. Allows us to add a value to the accumulator and a carry bit. 
 /// If the result is > 255 there is an overflow setting the carry bit. Ths allows you 
@@ -252,7 +252,11 @@ pub fn ora(cpu: &mut CPU) -> u8 {
     0
 }
 
+/// Push Accumulator to Stack.
 pub fn pha(cpu: &mut CPU) -> u8 {
+    cpu.write(STACK_BASE + cpu.sp as u16, cpu.a);
+    cpu.sp -= 1;
+
     0
 }
 
@@ -260,7 +264,14 @@ pub fn php(cpu: &mut CPU) -> u8 {
     0
 }
 
+/// Pop Accumulator off Stack.
 pub fn pla(cpu: &mut CPU) -> u8 {
+    cpu.sp += 1;
+    cpu.a = cpu.read(STACK_BASE + cpu.sp as u16);
+
+    cpu.status.set(StatusFlags::Z, cpu.a == 0);
+    cpu.status.set(StatusFlags::N, cpu.a & 0x80 != 0);
+
     0
 }
 
@@ -276,7 +287,20 @@ pub fn ror(cpu: &mut CPU) -> u8 {
     0
 }
 
+/// Returns from a BRK, IRQ or NMI.
 pub fn rti(cpu: &mut CPU) -> u8 {
+    // Restore the status register value from the stack
+    let status_bits = cpu.read(STACK_BASE + cpu.sp as u16 + 1);
+    cpu.status = StatusFlags::from_bits(status_bits).unwrap();
+    cpu.status.set(StatusFlags::B, false);
+    cpu.status.set(StatusFlags::U, false);
+    cpu.sp += 1;
+
+    let hi = cpu.read(STACK_BASE + cpu.sp as u16 + 1); 
+    let lo = cpu.read(STACK_BASE + cpu.sp as u16 + 2);
+    cpu.pc = u16::from_be_bytes([lo, hi]);
+    cpu.sp += 2;
+
     0
 }
 

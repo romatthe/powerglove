@@ -4,8 +4,19 @@ pub mod instructions;
 
 use bitflags::bitflags;
 use crate::bus::Bus;
-
 use self::instructions::{AddressingMode, Instruction};
+
+/// Base location of the stack to which we can add the stack pointer offset.
+pub const STACK_BASE: u16 = 0x0100;
+/// Base location of the value in memory pointing to the location of the initial
+/// value of the program counter on reset.
+pub const PC_POINTER: u16 = 0xFFFC;
+/// Base location of the value in memory pointing to the location of the initial
+/// value of the program counter when an IRQ occurs.
+pub const IRQ_POINTER: u16 = 0xFFFE;
+/// Base location of the value in memory pointing to the location of the initial
+/// value of the program counter when an NMI occurs.
+pub const NMI_POINTER: u16 = 0xFFFA;
 
 bitflags! {
     pub struct StatusFlags: u8 {
@@ -90,7 +101,25 @@ impl CPU {
 
     /// Reset the CPU to its initial boot state
     pub fn reset(&mut self) {
-        
+        self.a = 0;
+        self.x = 0;
+        self.y = 0;
+
+        self.sp = 0xFD;
+        self.status = StatusFlags::U;
+
+        // Locating set by the programmer pointing to the location of the 
+        // program counter on reset.
+        let lo = self.read(PC_POINTER);
+        let hi = self.read(PC_POINTER + 1);
+        self.pc = u16::from_le_bytes([lo, hi]);
+
+        self.addr_rel = 0x0000;
+        self.addr_abs = 0x0000;
+        self.fetched = 0x00;
+
+        // Resets and interrupts actually consume cycles
+        self.cycles_remaining = 8;
     }
 
     fn fetch(&mut self) -> u8 {
@@ -130,12 +159,55 @@ impl CPU {
     }
 
     /// Simulate an interrupt request signal 
-    pub fn irq(&self) {
+    pub fn irq(&mut self) {
+        // Only run the interrupt if the interrupt disable flag is not set
+        if !self.status.contains(StatusFlags::I) {
+            // On interrupt, we write data to the stack so we can resume out program later. First
+            // is the current program counter.
+            self.write(STACK_BASE + self.sp as u16, ((self.pc >> 8) & 0x00FF) as u8);
+            self.write(STACK_BASE + self.sp as u16 - 1, (self.pc & 0x00FF) as u8);
+            self.sp -= 2;
 
+            // Next we set the correct status flags and push those unto the stack as well
+            self.status.set(StatusFlags::B, false); // Set to 0 when pushing to the stack during IRQ/NMI, 1 during PHP/BRK
+            self.status.set(StatusFlags::U, true);  // Always set to 1 when pushed to the stack during IRQ
+            self.status.set(StatusFlags::I, true);  // Disable interrupts during an interrupt
+            self.write(STACK_BASE + self.sp as u16, self.status.bits);
+            self.sp -= 1;
+
+            // We look up the value of the interrupt handler we're supposed to execute at `IRQ_POINTER` and set the
+            // program counter there.
+            let lo = self.read(IRQ_POINTER);
+            let hi = self.read(IRQ_POINTER + 1);
+            self.pc = u16::from_be_bytes([lo, hi]);
+
+            // Resets and interrupts actually consume cycles
+            self.cycles_remaining = 7;
+        }
     }
 
-    /// Simulate a non-maskable interrupt request signal
-    pub fn nmi(&self) {
+    /// Simulate a non-maskable interrupt request signal. Cannot be stopped from ocurring.
+    pub fn nmi(&mut self) {
+        // On interrupt, we write data to the stack so we can resume out program later. First
+        // is the current program counter.
+        self.write(STACK_BASE + self.sp as u16, ((self.pc >> 8) & 0x00FF) as u8);
+        self.write(STACK_BASE + self.sp as u16 - 1, (self.pc & 0x00FF) as u8);
+        self.sp -= 2;
 
+        // Next we set the correct status flags and push those unto the stack as well
+        self.status.set(StatusFlags::B, false); // Set to 0 when pushing to the stack during IRQ/NMI, 1 during PHP/BRK
+        self.status.set(StatusFlags::U, true);  // Always set to 1 when pushed to the stack during IRQ
+        self.status.set(StatusFlags::I, true);  // Disable interrupts during an interrupt
+        self.write(STACK_BASE + self.sp as u16, self.status.bits);
+        self.sp -= 1;
+
+        // We look up the value of the interrupt handler we're supposed to execute at `IRQ_POINTER` and set the
+        // program counter there.
+        let lo = self.read(NMI_POINTER);
+        let hi = self.read(NMI_POINTER + 1);
+        self.pc = u16::from_be_bytes([lo, hi]);
+
+        // Resets and interrupts actually consume cycles
+        self.cycles_remaining = 8;
     }
 }
