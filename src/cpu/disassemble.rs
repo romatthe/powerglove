@@ -7,7 +7,7 @@ pub struct Disassembler;
 impl Disassembler {
     /// Disassemble the program in memory from address start to address end.
     pub fn for_range(cpu: &CPU, start: u16, stop: u16) -> Vec<(u16, String)> {
-        let mut current_addr = start as u32;
+        let mut current_addr = start as u32; // Hack to prevent overflows while still having the while loop work
         let mut instr_lines = Vec::new();
 
         // Iteratre over all addresses as long as we have not reached the end

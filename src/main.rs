@@ -1,4 +1,4 @@
-use crate::cpu::{CPU, PC_POINTER, disassemble::Disassembler};
+use crate::cpu::{CPU, disassemble::Disassembler};
 
 mod bus;
 mod cpu;
