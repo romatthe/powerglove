@@ -136,15 +136,18 @@ impl CPU {
     }
 
     /// Simulates the passing of a single clock cycle
-    fn clock(&mut self) {
+    pub fn clock(&mut self) {
         // No more cycles are remaining in the currently executing instruction
         if self.cycles_remaining == 0 {
             // Set the next opcode to execute
             self.opcode = self.read(self.pc);
+            // DEBUG
+            println!("{:#6X}:   {:?}, A: {:#04x}, X: {:#04x}, Y: {:#04x}, SP: {:#06x}", self.pc, Instruction::decode(self.opcode).mnemonic, self.a, self.x, self.y, self.sp);
             self.pc = self.pc.wrapping_add(1);
             
             // Set how many clock cycles we need to execute
             self.cycles_remaining = Instruction::decode(self.opcode).cycles;
+            
 
             // Fetch operands with the correct addressing mode and execute the instruction
             let more_cycles1 = (Instruction::decode(self.opcode).mode_exec)(self);

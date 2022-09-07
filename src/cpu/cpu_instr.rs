@@ -537,58 +537,108 @@ pub fn rti(cpu: &mut CPU) -> u8 {
     0
 }
 
+/// Return from subroutine.
+// TODO: Check this implementation
 pub fn rts(cpu: &mut CPU) -> u8 {
+    let hi = cpu.read(STACK_BASE + cpu.sp as u16 - 1); 
+    let lo = cpu.read(STACK_BASE + cpu.sp as u16 - 2);
+    cpu.pc = u16::from_be_bytes([lo, hi]);
+    cpu.pc += 1;
+    cpu.sp -= 2;
+
     0
 }
 
+/// Set carry flag.
 pub fn sec(cpu: &mut CPU) -> u8 {
+    cpu.status.set(StatusFlags::C, true);
     0
 }
 
+/// Set decimal flag.
 pub fn sed(cpu: &mut CPU) -> u8 {
+    cpu.status.set(StatusFlags::D, true);
     0
 }
 
+/// Set interrupt flag (aka enable interrupts).
 pub fn sei(cpu: &mut CPU) -> u8 {
+    cpu.status.set(StatusFlags::I, true);
     0
 }
 
+/// Store accumulator at address.
 pub fn sta(cpu: &mut CPU) -> u8 {
+    cpu.write(cpu.addr_abs, cpu.a);
     0
 }
 
+/// Store x register at address.
 pub fn stx(cpu: &mut CPU) -> u8 {
+    cpu.write(cpu.addr_abs, cpu.x);
     0
 }
 
+/// Store y register at address.
 pub fn sty(cpu: &mut CPU) -> u8 {
+    cpu.write(cpu.addr_abs, cpu.y);
     0
 }
 
+/// Transfer accumulator to x register.
 pub fn tax(cpu: &mut CPU) -> u8 {
+    cpu.x = cpu.a;
+    cpu.status.set(StatusFlags::Z, cpu.x == 0);
+    cpu.status.set(StatusFlags::N, cpu.x & 0x80 != 0);
+
     0
 }
 
+/// Transfer accumlator to y register.
 pub fn tay(cpu: &mut CPU) -> u8 {
+    cpu.y = cpu.a;
+    cpu.status.set(StatusFlags::Z, cpu.y == 0);
+    cpu.status.set(StatusFlags::N, cpu.y & 0x80 != 0);
+
     0
 }
 
+/// Transfer stack pointer to x register.
 pub fn tsx(cpu: &mut CPU) -> u8 {
+    cpu.x = cpu.sp;
+    cpu.status.set(StatusFlags::Z, cpu.x == 0);
+    cpu.status.set(StatusFlags::N, cpu.x & 0x80 != 0);
+
     0
 }
 
+/// Transfer x register to accumulator.
 pub fn txa(cpu: &mut CPU) -> u8 {
+    cpu.a = cpu.x;
+    cpu.status.set(StatusFlags::Z, cpu.a == 0);
+    cpu.status.set(StatusFlags::N, cpu.a & 0x80 != 0);
+    
     0
 }
 
-pub fn tya(cpu: &mut CPU) -> u8 {
-    0
-}
-
+/// Transfer x register to stack pointer.
 pub fn txs(cpu: &mut CPU) -> u8 {
+    cpu.sp = cpu.x;
     0
 }
 
+/// Transfer y register to accumulator.
+pub fn tya(cpu: &mut CPU) -> u8 {
+    cpu.a = cpu.y;
+    cpu.status.set(StatusFlags::Z, cpu.a == 0);
+    cpu.status.set(StatusFlags::N, cpu.a & 0x80 != 0);
+    
+    0
+}
+
+/// Unimplemented illegal opcode. Since some games actually use illegal opcodes, 
+/// we don't panic here, we just continue as if nothing happened. Specific illegal
+/// opcodes will need to be implemented on a need-to basis.
 pub fn xxx(cpu: &mut CPU) -> u8 {
     0
 }
